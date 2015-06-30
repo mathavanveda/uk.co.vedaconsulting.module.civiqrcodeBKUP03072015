@@ -4,34 +4,12 @@ require_once 'CRM/Core/Form.php';
 
 class CRM_Civiqrcode_Form_QRCodeSettings extends CRM_Core_Form {
   function preProcess() {
-    $qrToken   = QRCODE_SETTING_DB_COLUMN_QRCODE_TOKEN;
-    $qrTarget  = QRCODE_SETTING_DB_COLUMN_QRCODE_TARGET;
-    $argMem    = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_MEM;
-    $argCs     = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_CS;
-    $QrCodeDAO = self::getQrDetails();
-    $existingQrcodeTokens = array();
-    while ($QrCodeDAO->fetch()) {
-      $url = CRM_Utils_System::url('civicrm/admin/form/qrcodesetting', 'reset=1&action=update&id='.$QrCodeDAO->id, TRUE);
-      $existingQrcodeTokens[$QrCodeDAO->id] = array(
-        'qr_token_name'     => $QrCodeDAO->$qrToken,
-        'qr_target_url'     => $QrCodeDAO->$qrTarget,
-        'arg_membershipid'  => $QrCodeDAO->$argMem,
-        'arg_checksum'      => $QrCodeDAO->$argCs,
-        'action'            => sprintf("<span><a href='%s'>View/Edit</a></span>&nbsp;
-                                        <span><a href='javascript:void(0)' onclick='delQrCode(%d);'>Delete</a></span>", 
-                                $url, $QrCodeDAO->id
-                                ),
-      );
-    }
-    
-    if (!CRM_Utils_Array::crmIsEmptyArray($existingQrcodeTokens)) {
-      $this->assign('existingQrcodeTokens', $existingQrcodeTokens);
-    }
+
     parent::preProcess();  
   }
   
   
-  function getQrDetails( $id = NULL ) {
+  static function getQrDetails( $id = NULL ) {
     
     $tableName = QRCODE_SETTING_DB_TABLENAME;
     $existingQrcodeTokens = array();
@@ -99,6 +77,7 @@ class CRM_Civiqrcode_Form_QRCodeSettings extends CRM_Core_Form {
     // export form elements
     $this->assign('elementNames', $this->getRenderableElementNames());
     $this->assign('helpText', $helpText);
+    $this->assign('viewLink', CRM_Utils_System::url('civicrm/view/qrcodesetting', 'reset=1'));
     parent::buildQuickForm();
   }
   
@@ -151,21 +130,15 @@ class CRM_Civiqrcode_Form_QRCodeSettings extends CRM_Core_Form {
     $querParams = array(
       1 => array($values['qr_token_name'], 'String'),
       2 => array($values['qr_target_url'], 'String'),
-      3 => array($values['arg_membershipid'], 'Integer'),
-      4 => array($values['arg_checksum'], 'Integer'),
+      3 => array(isset($values['arg_membershipid']) ? $values['arg_membershipid'] : 0, 'Integer'),
+      4 => array(isset($values['arg_checksum']) ? $values['arg_checksum'] : 0, 'Integer'),
     );
     CRM_Core_DAO::executeQuery( $query, $querParams );
     $urlArguments = array(
       'reset' => 1,
     );
     
-    // if ($values['action']) {
-    //   $urlArguments['action'] = $values['action'];
-    // }
-    // if ($values['id']) {
-    //   $urlArguments['id'] = $values['id'];
-    // }
-    CRM_Utils_System::redirect(CRM_Utils_System::url('civicrm/admin/form/qrcodesetting', $urlArguments));
+    CRM_Utils_System::redirect(CRM_Utils_System::url('civicrm/view/qrcodesetting', $urlArguments));
     parent::postProcess();
   }
   
