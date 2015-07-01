@@ -4,7 +4,6 @@ require_once 'CRM/Core/Form.php';
 
 class CRM_Civiqrcode_Form_QRCodeSettings extends CRM_Core_Form {
   function preProcess() {
-
     parent::preProcess();  
   }
   
@@ -28,14 +27,14 @@ class CRM_Civiqrcode_Form_QRCodeSettings extends CRM_Core_Form {
     if ($id) {
       $qrToken   = QRCODE_SETTING_DB_COLUMN_QRCODE_TOKEN;
       $qrTarget  = QRCODE_SETTING_DB_COLUMN_QRCODE_TARGET;
-      $argMem    = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_MEM;
+      $argExt    = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_EXT;
       $argCs     = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_CS;      
       $QrCodeDAO = self::getQrDetails($id);
       if ($QrCodeDAO->fetch()) {
         $defaults['qr_token_name']    = $QrCodeDAO->$qrToken;
         $defaults['qr_target_url']    = $QrCodeDAO->$qrTarget;
-        $defaults['arg_membershipid'] = $QrCodeDAO->$argMem;;
-        $defaults['arg_checksum']     = $QrCodeDAO->$argCs;;
+        $defaults['arg_externalid']   = $QrCodeDAO->$argExt;
+        $defaults['arg_checksum']     = $QrCodeDAO->$argCs;
       }
     }
     
@@ -53,7 +52,7 @@ class CRM_Civiqrcode_Form_QRCodeSettings extends CRM_Core_Form {
     $this->add('checkbox', 'arg_checksum', ts('Include Checksum'), '', FALSE, array('checked' => 'checked'));
     
     //Include membership id in URL
-    $this->add('checkbox', 'arg_membershipid', ts('Include Membership ID'), '', FALSE, array('checked' => 'checked'));
+    $this->add('checkbox', 'arg_externalid', ts('Include External ID'), '', FALSE, array('checked' => 'checked'));
     
     //add Form Rule.
     $this->addFormRule(array('CRM_Civiqrcode_Form_QRCodeSettings', 'formRule'), $this);
@@ -70,7 +69,7 @@ class CRM_Civiqrcode_Form_QRCodeSettings extends CRM_Core_Form {
     $helpText = array(
       'qr_token_name' => 'Unique token name.',
       'qr_target_url' => 'Add the target URL of the QRcode. Doesn\'t need to add URL params inside the URL For ex: add "civicrm/contact/view" to set target to view contact page. cid should be add by default in URL',
-      'arg_membershipid' => 'Please Select checkbox if external_id need to be added into URL. NOTE: external_id should be added as "mid" in URL',
+      'arg_externalid' => 'Please Select checkbox if external_id need to be added into URL. NOTE: external_id should be added as "mid" in URL',
       'arg_checksum' => 'Please Select checkbox if checksum need to be added into URL. checksum used for validation of the contact',
     );
     
@@ -110,27 +109,27 @@ class CRM_Civiqrcode_Form_QRCodeSettings extends CRM_Core_Form {
     $tableName = QRCODE_SETTING_DB_TABLENAME;
     $qrToken   = QRCODE_SETTING_DB_COLUMN_QRCODE_TOKEN;
     $qrTarget  = QRCODE_SETTING_DB_COLUMN_QRCODE_TARGET;
-    $argMem    = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_MEM;
+    $argExt    = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_EXT;
     $argCs     = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_CS;
     //Update QRCode settings
     $query = "INSERT INTO {$tableName} (
               {$qrToken},
               {$qrTarget},
-              {$argMem},
+              {$argExt},
               {$argCs}
               ) 
               VALUES ( %1, %2, %3, %4 )
               ON DUPLICATE KEY UPDATE 
               {$qrToken}  = %1,
               {$qrTarget} = %2,
-              {$argMem}   = %3,
+              {$argExt}   = %3,
               {$argCs}    = %4
               ";
 
     $querParams = array(
       1 => array($values['qr_token_name'], 'String'),
       2 => array($values['qr_target_url'], 'String'),
-      3 => array(isset($values['arg_membershipid']) ? $values['arg_membershipid'] : 0, 'Integer'),
+      3 => array(isset($values['arg_externalid']) ? $values['arg_externalid'] : 0, 'Integer'),
       4 => array(isset($values['arg_checksum']) ? $values['arg_checksum'] : 0, 'Integer'),
     );
     CRM_Core_DAO::executeQuery( $query, $querParams );

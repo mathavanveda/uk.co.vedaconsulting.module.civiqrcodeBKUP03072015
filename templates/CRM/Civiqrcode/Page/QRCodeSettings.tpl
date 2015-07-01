@@ -14,8 +14,9 @@
         <tr>
           <th> Qr Code Tokens </th>
           <th> Qr Code Targets </th>
-          <th> Argument Membersihp Enabled </th>
-          <th> Argument Checksum Enabled</th>
+          <th> Argument External Id </th>
+          <th> Argument Checksum </th>
+          <th> Variable Name <br><small>Name which use to replace token value in template</small></th>
           <th> </th>
         </tr>
         </thead>
@@ -24,8 +25,9 @@
           <tr>
             <td>{$qrcode.qr_token_name}</td>
             <td>{$qrcode.qr_target_url}</td>
-            <td>{$qrcode.arg_membershipid}</td>
+            <td>{$qrcode.arg_externalid}</td>
             <td>{$qrcode.arg_checksum}</td>
+            <td>{$qrcode.token_replace}</td>
             <td>{$qrcode.action}</td>
           </tr>
           {/foreach}
