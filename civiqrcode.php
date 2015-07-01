@@ -4,7 +4,7 @@ require_once 'civiqrcode.civix.php';
 define('QRCODE_SETTING_DB_TABLENAME'            , 'civicrm_qrcode_settings');
 define('QRCODE_SETTING_DB_COLUMN_QRCODE_TOKEN'  , 'qrcode_token_name');
 define('QRCODE_SETTING_DB_COLUMN_QRCODE_TARGET' , 'qrcode_target_url');
-define('QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_MEM', 'arg_membershipid');
+define('QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_EXT', 'arg_externalid');
 define('QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_CS' , 'arg_checksum');
 /**
  * Implementation of hook_civicrm_config
@@ -35,7 +35,7 @@ function civiqrcode_civicrm_install() {
   $tableName = QRCODE_SETTING_DB_TABLENAME;
   $qrToken   = QRCODE_SETTING_DB_COLUMN_QRCODE_TOKEN;
   $qrTarget  = QRCODE_SETTING_DB_COLUMN_QRCODE_TARGET;
-  $argMem    = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_MEM;
+  $argExt    = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_EXT;
   $argCs     = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_CS;
   
   //Create custom table to manage the QRCode settings
@@ -43,7 +43,7 @@ function civiqrcode_civicrm_install() {
             `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
             {$qrToken} varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL, 
             {$qrTarget} varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-            {$argMem} tinyint(4) DEFAULT '1',
+            {$argExt} tinyint(4) DEFAULT '1',
             {$argCs} tinyint(4) DEFAULT '1',
             PRIMARY KEY (`id`),
             UNIQUE KEY `unique_entity_id` ({$qrToken})
@@ -59,6 +59,9 @@ function civiqrcode_civicrm_install() {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_uninstall
  */
 function civiqrcode_civicrm_uninstall() {
+  //check table exists and drop while uninstall the extension
+  $tableName = QRCODE_SETTING_DB_TABLENAME;
+  CRM_Core_DAO::executeQuery("DROP TABLE IF EXISTS {$tableName}");
   _civiqrcode_civix_civicrm_uninstall();
 }
 
@@ -142,7 +145,7 @@ function civiqrcode_civicrm_navigationMenu( &$params ) {
     'attributes' => array (
       'label'      => 'QRCode Token Settings',
       'name'       => 'QRCode_Token_Settings',
-      'url'        => 'civicrm/admin/form/qrcodesetting?reset=1',
+      'url'        => 'civicrm/view/qrcodesetting?reset=1',
       'permission' => 'administer CiviCRM',
       'operator'   => null,
       'separator'  => null,
@@ -159,7 +162,7 @@ function civiqrcode_civicrm_tokens( &$tokens ) {
   $qrToken   = QRCODE_SETTING_DB_COLUMN_QRCODE_TOKEN;
   $getAllQrCodeTokenDAO = CRM_Core_DAO::executeQuery("SELECT {$qrToken} as qrtoken FROM {$tableName}");
   while ($getAllQrCodeTokenDAO->fetch()) {
-    $tokens['contact']['contact.'.$getAllQrCodeTokenDAO->qrtoken] =  ts("QR Code - {$getAllQrCodeTokenDAO->qrtoken}");
+    $tokens['contact']['civiqrcode.'.$getAllQrCodeTokenDAO->qrtoken] =  ts("QR Code - {$getAllQrCodeTokenDAO->qrtoken}");
   }
 }
 
@@ -174,7 +177,7 @@ function civiqrcode_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
     $tableName = QRCODE_SETTING_DB_TABLENAME;
     $qrToken   = QRCODE_SETTING_DB_COLUMN_QRCODE_TOKEN;
     $qrTarget  = QRCODE_SETTING_DB_COLUMN_QRCODE_TARGET;
-    $argMem    = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_MEM;
+    $argExt    = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_EXT;
     $argCs     = QRCODE_SETTING_DB_COLUMN_QRCODE_ARG_CS;
     
     $getAllQrCodeTokenDAO = CRM_Core_DAO::executeQuery("SELECT * FROM {$tableName}");
@@ -194,7 +197,7 @@ function civiqrcode_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
         $urlParams['cid'] = $id;
         $urlParams['reset'] = 1;
         
-        if ($getAllQrCodeTokenDAO->$argMem) {
+        if ($getAllQrCodeTokenDAO->$argExt) {
           $urlParams['mid'] =  CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Contact', $id, 'external_identifier', 'id');
         }
         if ($getAllQrCodeTokenDAO->$argCs) {
@@ -205,7 +208,7 @@ function civiqrcode_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = 
         require_once $qrlibFile;
         QRcode::png($url, $pngAbsoluteFilePath, 'L', 4, 2);
         
-        $values[$id]['contact.'.$getAllQrCodeTokenDAO->$qrToken] = realpath($pngAbsoluteFilePath);
+        $values[$id]['civiqrcode.'.$getAllQrCodeTokenDAO->$qrToken] = realpath($pngAbsoluteFilePath);
       }//end while
     }//end foreach
   }//end if
